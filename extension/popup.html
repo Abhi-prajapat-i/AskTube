@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AskTube</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app">
+
+    <header class="header">
+      <div class="header-row">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26">
+            <rect x="1" y="6" width="30" height="20" rx="5" fill="var(--accent)"/>
+            <polygon points="13,11 22,16 13,21" fill="var(--bg)"/>
+          </svg>
+        </div>
+        <div class="titles">
+          <h1>AskTube</h1>
+          <p class="subtitle">Ask anything about this video</p>
+        </div>
+      </div>
+      <div class="sprockets" aria-hidden="true"></div>
+    </header>
+
+    <section id="video-status" class="video-status">
+      <!-- Filled dynamically by popup.js -->
+      <span id="status-icon" class="status-icon">•</span>
+      <span id="status-text" class="status-text">Checking current tab…</span>
+    </section>
+
+    <section id="video-meta" class="video-meta hidden">
+      <span class="meta-label">VIDEO ID</span>
+      <span id="video-id-badge" class="video-id-badge"></span>
+    </section>
+
+    <main class="main">
+      <label for="question-input" class="visually-hidden">Your question</label>
+      <textarea
+        id="question-input"
+        class="question-input"
+        placeholder="Ask something about this video..."
+        rows="3"
+        disabled
+      ></textarea>
+
+      <button id="ask-button" class="ask-button" disabled>
+        <span id="ask-button-label">Ask</span>
+        <span class="ask-emoji" aria-hidden="true">🤖</span>
+      </button>
+
+      <div id="loading-state" class="loading-state hidden">
+        <div class="scan-line"></div>
+        <span>Thinking...</span>
+      </div>
+
+      <div id="error-state" class="error-state hidden">
+        <span id="error-text"></span>
+      </div>
+
+      <section id="answer-section" class="answer-section hidden">
+        <div class="answer-header">
+          <span>🤖 Answer</span>
+        </div>
+        <div id="answer-text" class="answer-text"></div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

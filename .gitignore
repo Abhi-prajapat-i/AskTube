@@ -1,0 +1,17 @@
+# Secrets
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Vector store cache (regenerated per video, no need to version-control)
+backend/vectorstores/
+
+# OS / editor
+.DS_Store
+.vscode/
+*.log
