@@ -30,6 +30,8 @@ AskTube/
 │   ├── requirements.txt
 │   └── .env.example
 │
+├──screenshots/
+│   ├── result.png
 ├── .gitignore
 └── README.md
 ```
@@ -161,6 +163,10 @@ URL differs:
 3. Type a question and press Enter (or click **Ask 🤖**).
 4. The first question on a given video takes longer (5–15s) while the
    backend builds that video's transcript index. After that it's fast.
+ 
+<p align="center">
+   <img src="screenshots/result.png" width="80%">
+</p>
 
 ### API reference
 
