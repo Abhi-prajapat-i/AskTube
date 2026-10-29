@@ -11,27 +11,39 @@ User opens YouTube → plays a video → clicks AskTube → asks a question
    → transcript + RAG → Groq LLM → answer displayed in the popup
 ```
 
+## Features
+
+- Automatically detects the YouTube video in the active tab
+- Answers are grounded in the video's transcript (no invented information)
+- Transcript index is built once per video and reused for later questions
+- Answers render as formatted Markdown (bold text, lists, tables)
+- Friendly error messages instead of stack traces
+- Works in Chrome, Microsoft Edge, and Brave
+
 ## Project structure
 
 ```
 AskTube/
-├── extension/          Chrome extension (Manifest V3)
+├── extension/           Chrome extension (Manifest V3)
 │   ├── manifest.json
 │   ├── popup.html
 │   ├── popup.css
 │   ├── popup.js
+│   ├── lib/              Bundled marked.js + DOMPurify (Markdown rendering)
+│   │   ├── marked.min.js
+│   │   └── purify.min.js
 │   └── icons/
 │
 ├── backend/             FastAPI + RAG pipeline
 │   ├── app.py            FastAPI routes
-│   ├── transcript.py      YouTube transcript fetching + error handling
-│   ├── vectorstore.py     FAISS creation/loading, keyed by video ID
-│   ├── rag_chain.py       Retriever + prompt + Groq LLM
+│   ├── transcript.py     YouTube transcript fetching + error handling
+│   ├── vectorstore.py    FAISS creation/loading, keyed by video ID
+│   ├── rag_chain.py      Retriever + prompt + Groq LLM
 │   ├── requirements.txt
 │   └── .env.example
 │
-├──screenshots/
-│   ├── result.png
+├── screenshots/
+│   └── result.png
 ├── .gitignore
 └── README.md
 ```
@@ -56,7 +68,8 @@ AskTube/
    question, into a prompt that instructs the Groq LLM to answer **only**
    from that context (and to say so plainly if the answer isn't in the
    transcript).
-6. The answer is returned as JSON and rendered in the popup.
+6. The answer is returned as JSON. The popup converts the Markdown to HTML
+   with `marked.js`, sanitizes it with `DOMPurify`, and displays it.
 
 ## Quick start
 
@@ -85,16 +98,16 @@ venv\Scripts\activate
 
 You should see `(venv)` at the start of your terminal prompt once it's active.
 
-> **Windows users:** if you already have `torch` installed elsewhere, pip
-> will reuse it automatically in this venv only if it's installed *inside*
-> this venv too. On a fresh venv, plain `pip install torch` pulls in several
-> GB of unused NVIDIA CUDA packages even without a GPU. To avoid that,
-> install the CPU-only build first:
+> **Windows / Linux users:** on a fresh venv, plain `pip install torch`
+> pulls in several GB of unused NVIDIA CUDA packages, even without a GPU.
+> To avoid that, install the CPU-only build first:
 > ```bash
 > pip install torch --index-url https://download.pytorch.org/whl/cpu
 > ```
 > Then continue with the step below as normal. This has no effect on
-> functionality — AskTube's embedding step doesn't need a GPU.
+> functionality — AskTube's embedding step doesn't need a GPU. (If `torch`
+> is already installed *inside* this venv, pip reuses it and you can skip
+> this.)
 
 Install dependencies:
 
@@ -156,6 +169,9 @@ URL differs:
 5. An "AskTube" card should appear with no errors. Pin it via the
    puzzle-piece icon in the toolbar for quick access.
 
+> Make sure `extension/lib/` contains both `marked.min.js` and
+> `purify.min.js`, otherwise answers won't render.
+
 ### Step 5 — Use it
 
 1. Open any YouTube video (a `/watch?v=...` URL — not the homepage).
@@ -163,12 +179,12 @@ URL differs:
 3. Type a question and press Enter (or click **Ask 🤖**).
 4. The first question on a given video takes longer (5–15s) while the
    backend builds that video's transcript index. After that it's fast.
- 
+
 <p align="center">
    <img src="screenshots/result.png" width="80%">
 </p>
 
-### API reference
+## API reference
 
 **`POST /ask`**
 
@@ -195,9 +211,6 @@ The extension talks to `http://localhost:8000` by default (see
 `BACKEND_URL` at the top of `popup.js`) — make sure the backend is running
 before you use it. If you deploy the backend elsewhere, update that
 constant and the `host_permissions` entry in `manifest.json` to match.
-
-If the video has no transcript available, or transcripts are disabled for
-it, you'll see a clear message explaining why instead of a generic error.
 
 ## Notes on transcripts
 
@@ -243,6 +256,23 @@ running (`uvicorn` should be live in its terminal) and that
 update `BACKEND_URL` in `popup.js` and `host_permissions` in
 `manifest.json` to match.
 
+**`DOMPurify is not defined` or answers show raw `**bold**` and `|` table
+symbols** — the popup renders Markdown using the bundled libraries. Check
+that:
+- `extension/lib/marked.min.js` and `extension/lib/purify.min.js` exist
+  with exactly those names
+- `popup.html` loads them before `popup.js`:
+  ```html
+  <script src="lib/marked.min.js"></script>
+  <script src="lib/purify.min.js"></script>
+  <script src="popup.js"></script>
+  ```
+- you reloaded the extension after adding them
+
+**Long answers or wide tables are cut off** — the popup scrolls vertically
+as a whole, and wide tables scroll sideways inside the answer box. Make sure
+you're using the latest `popup.css` and reload the extension.
+
 **Extension changes aren't showing up** — after editing any extension
 file, go to your browser's extensions page and click the refresh icon on
 the AskTube card to reload it.
@@ -256,6 +286,8 @@ without a GPU. See the CPU-only install note in Step 1 above.
 - The Groq API key lives only in `backend/.env` and is never sent to, or
   referenced by, any extension code.
 - `backend/.env` is listed in `.gitignore` — never commit your real key.
+- LLM answers are sanitized with DOMPurify before being inserted into the
+  popup, so a malicious or malformed answer can't run scripts.
 - CORS is wide open (`allow_origins=["*"]`) for local development, since
   Chrome extensions call the backend from a `chrome-extension://<id>`
   origin. **Before shipping to production**, restrict this to your
