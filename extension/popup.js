@@ -1,15 +1,3 @@
-/**
- * AskTube - popup.js
- *
- * Responsibilities:
- *   - Detect whether the active tab is a YouTube video, and extract its video ID.
- *   - Manage the popup's UI states: detected / not-detected, loading, error, answer.
- *   - Send the question + video ID to the FastAPI backend and render the answer.
- *
- * The Groq API key never appears here — this file only ever talks to our
- * own backend at BACKEND_URL.
- */
-
 const BACKEND_URL = "http://localhost:8000/ask";
 
 // ---------------------------------------------------------------------------
@@ -135,7 +123,9 @@ function clearError() {
 }
 
 function showAnswer(text) {
-  answerTextEl.textContent = text;
+  // Render Markdown (bold, tables, lists) and sanitize it, since the text
+  // comes from an LLM and must never be trusted as raw HTML.
+  answerTextEl.innerHTML = DOMPurify.sanitize(marked.parse(text));
   answerSectionEl.classList.remove("hidden");
 }
 
