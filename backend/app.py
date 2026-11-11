@@ -30,14 +30,6 @@ logger = logging.getLogger("asktube")
 app = FastAPI(title="AskTube API", version="1.0.0")
 
 # --------------------------------------------------------------------------
-# CORS
-#
-# Chrome extensions call the backend from an "chrome-extension://<id>"
-# origin, not a regular http(s) origin. For local development we allow all
-# origins so the extension works regardless of the (locally-generated)
-# extension ID. In production, replace this with the extension's exact
-# "chrome-extension://<your-extension-id>" origin instead of "*".
-# --------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # TODO: restrict to your extension's origin in production
